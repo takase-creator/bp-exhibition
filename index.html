@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BODY PALETTE 簡易診断</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --blue:         #2563EB;
+      --blue-bg:      #EFF6FF;
+      --blue-text:    #1E40AF;
+      --pink:         #DB2777;
+      --pink-bg:      #FDF2F8;
+      --pink-text:    #9D174D;
+      --green:        #16A34A;
+      --green-bg:     #F0FDF4;
+      --green-text:   #14532D;
+      --orange:       #EA580C;
+      --orange-bg:    #FFF7ED;
+      --orange-text:  #9A3412;
+      --gray:         #6B7280;
+      --gray-bg:      #F3F4F6;
+      --border:       #E5E7EB;
+      --text:         #111827;
+      --radius:       14px;
+      --shadow:       0 2px 16px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: -apple-system, 'Helvetica Neue', Arial,
+                   'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+      background: #F8FAFC;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── SCREEN WRAPPER ── */
+    .screen {
+      min-height: 100vh;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .logo { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; }
+    .logo em { font-style: normal; color: var(--pink); }
+
+    /* ── PROGRESS ── */
+    .progress { display: flex; align-items: center; gap: 6px; margin-bottom: 28px; }
+    .pdot {
+      height: 6px; border-radius: 3px; background: var(--border);
+      transition: background .25s, width .25s;
+    }
+    .pdot.done   { background: var(--pink); opacity: .45; width: 28px; }
+    .pdot.active { background: var(--pink); width: 40px; }
+    .pdot.idle   { width: 28px; }
+    .plabel { font-size: 12px; color: var(--gray); margin-left: 6px; }
+
+    /* ── QUESTION ── */
+    .qtitle { font-size: 22px; font-weight: 800; line-height: 1.4; margin-bottom: 6px; }
+    .qsub   { font-size: 13px; color: var(--gray); margin-bottom: 28px; }
+
+    /* ── OPTION GRID ── */
+    .ogrid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .ogrid.c3 { grid-template-columns: repeat(3, 1fr); }
+
+    .obtn {
+      padding: 22px 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      text-align: center;
+      line-height: 1.45;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .15s, background .15s, transform .15s, box-shadow .15s;
+    }
+    .obtn:hover {
+      border-color: var(--pink);
+      background: var(--pink-bg);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+    .obtn.sel {
+      border-color: var(--pink);
+      background: var(--pink-bg);
+      color: var(--pink);
+    }
+
+    /* ── CHALLENGE CHIPS ── */
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 32px; justify-content: center; }
+    .chip {
+      padding: 10px 18px;
+      border: 2px solid var(--border);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .chip:hover  { border-color: var(--pink); background: var(--pink-bg); }
+    .chip.sel    { border-color: var(--pink); background: var(--pink); color: #fff; }
+
+    /* ── BUTTONS ── */
+    .btn-p {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--pink); color: #fff; border: none;
+      border-radius: var(--radius); font-size: 16px; font-weight: 800;
+      padding: 16px 32px; cursor: pointer; text-decoration: none;
+      transition: background .15s, transform .15s, box-shadow .15s;
+    }
+    .btn-p:hover { background: #be185d; transform: translateY(-1px); box-shadow: var(--shadow); }
+    .btn-p.full  { width: 100%; }
+
+    .btn-s {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: #fff; color: var(--text);
+      border: 2px solid var(--border);
+      border-radius: var(--radius); font-size: 14px; font-weight: 700;
+      padding: 13px 20px; cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .btn-s:hover { border-color: #9CA3AF; background: var(--gray-bg); }
+    .btn-s.full  { width: 100%; }
+
+    .btn-ghost {
+      background: none; border: none; color: var(--gray);
+      font-size: 13px; cursor: pointer; padding: 6px 10px;
+      border-radius: 8px; transition: background .15s;
+    }
+    .btn-ghost:hover { background: var(--gray-bg); }
+
+    /* ── SUMMARY BAR ── */
+    .sumbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 12px 16px; margin-bottom: 18px;
+    }
+    .stag { display: flex; flex-direction: column; gap: 2px; }
+    .stag-lbl { font-size: 10px; color: var(--gray); font-weight: 600; }
+    .stag-val {
+      font-size: 12px; font-weight: 800;
+      background: var(--gray-bg); padding: 3px 10px; border-radius: 6px;
+    }
+    .sdiv { width: 1px; height: 32px; background: var(--border); }
+
+    /* ── SLIDE VIEWER ── */
+    .sviewer {
+      position: relative; border-radius: var(--radius);
+      overflow: hidden; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 460px;
+    }
+    .sviewer img {
+      max-width: 100%; max-height: 72vh;
+      object-fit: contain; display: block;
+    }
+    .splaceholder {
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 60px 32px; text-align: center; color: #aaa;
+    }
+    .splaceholder .ico { font-size: 56px; margin-bottom: 18px; }
+    .splaceholder .ptitle { font-size: 16px; font-weight: 700; color: #777; margin-bottom: 10px; }
+    .splaceholder code {
+      background: #333; color: #eee; font-size: 13px;
+      padding: 4px 10px; border-radius: 6px; margin-top: 6px; display: inline-block;
+    }
+
+    /* ── SLIDE NAV ── */
+    .snav { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 18px; }
+    .snav-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 2px solid var(--border); background: #fff;
+      font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s, color .15s;
+    }
+    .snav-btn:hover  { border-color: var(--pink); color: var(--pink); }
+    .snav-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .snav-cnt { font-size: 14px; font-weight: 700; color: var(--gray); min-width: 48px; text-align: center; }
+
+    /* ── RESULT ACTIONS ── */
+    .ract { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 32px; }
+
+    /* ── LIBRARY ── */
+    .libgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 28px; }
+    .pkcard {
+      border-radius: var(--radius); border: 2px solid transparent;
+      background: #fff; padding: 24px; cursor: pointer;
+      box-shadow: var(--shadow); transition: transform .2s, box-shadow .2s;
+    }
+    .pkcard:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.12); }
+    .pkcard-tag {
+      font-size: 11px; font-weight: 800; padding: 4px 12px;
+      border-radius: 999px; display: inline-block; margin-bottom: 12px;
+    }
+    .pkcard-title { font-size: 14px; font-weight: 800; line-height: 1.45; margin-bottom: 6px; }
+    .pkcard-cnt   { font-size: 12px; color: var(--gray); }
+    .pkcard-arr   { margin-top: 16px; font-size: 20px; }
+
+    /* ── START SCREEN ── */
+    .start {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 40px 24px;
+      background: linear-gradient(160deg, #fff 60%, #fdf2f8 100%);
+    }
+    .start-logo { font-size: 30px; font-weight: 900; letter-spacing: -1px; margin-bottom: 4px; }
+    .start-logo em { font-style: normal; color: var(--pink); }
+    .start-sub  { font-size: 12px; color: var(--gray); margin-bottom: 48px; letter-spacing: .05em; }
+    .start-h    { font-size: 26px; font-weight: 900; line-height: 1.35; margin-bottom: 14px; }
+    .start-desc { font-size: 14px; color: var(--gray); line-height: 1.9; margin-bottom: 48px; max-width: 420px; }
+    .start-btn  { font-size: 18px; padding: 20px 56px; border-radius: 999px; margin-bottom: 56px; }
+    .start-pkgs { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+    .start-pkg  { font-size: 13px; color: var(--gray); display: flex; align-items: center; gap: 5px; }
+
+    /* ── ADMIN PANEL ── */
+    #admin-wrap {
+      position: fixed; bottom: 20px; right: 20px; z-index: 999;
+    }
+    #admin-toggle {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #E5E7EB; border: none; cursor: pointer;
+      font-size: 15px; color: var(--gray); display: flex;
+      align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    #admin-toggle:hover { background: #D1D5DB; }
+    #admin-menu {
+      display: none; position: absolute; bottom: 46px; right: 0;
+      background: #fff; border-radius: var(--radius);
+      box-shadow: 0 4px 28px rgba(0,0,0,0.15);
+      border: 1px solid var(--border); min-width: 210px; overflow: hidden;
+    }
+    .amenu-item {
+      display: block; width: 100%; padding: 13px 18px;
+      text-align: left; border: none; background: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      color: var(--text); transition: background .12s;
+    }
+    .amenu-item:hover { background: var(--gray-bg); }
+    .amenu-item.red { color: #DC2626; }
+    .amenu-sep { height: 1px; background: var(--border); }
+    .badge {
+      display: inline-block; background: var(--pink); color: #fff;
+      font-size: 10px; font-weight: 800; padding: 1px 6px;
+      border-radius: 999px; margin-left: 6px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 560px) {
+      .ogrid   { grid-template-columns: 1fr 1fr; }
+      .ogrid.c3 { grid-template-columns: repeat(3, 1fr); }
+      .libgrid { grid-template-columns: 1fr 1fr; }
+      .ract    { grid-template-columns: 1fr; }
+      .qtitle  { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<!-- ── ADMIN PANEL ── -->
+<div id="admin-wrap">
+  <button id="admin-toggle" onclick="toggleAdmin()">⚙</button>
+  <div id="admin-menu">
+    <button class="amenu-item" onclick="exportCSV()">
+      📥 CSVエクスポート<span class="badge" id="logBadge">0</span>
+    </button>
+    <button class="amenu-item" onclick="viewLogs()">📋 記録を確認</button>
+    <div class="amenu-sep"></div>
+    <button class="amenu-item red" onclick="clearLogs()">🗑 記録をクリア</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// ★ CONFIGURATION ★
+// 画像を追加するときはここを編集してください
+// ══════════════════════════════════════════════════
+const PKGS = {
+  safety: {
+    id: 'safety',
+    label: '労災予防・身体負担軽減パッケージ',
+    tag: '安全衛生向け',
+    color: '#2563EB', bg: '#EFF6FF', text: '#1E40AF', ico: '🔵',
+    images: [
+      'slides/safety/安全衛生むけ.png',
+    ]
+  },
+  executive: {
+    id: 'executive',
+    label: '人的資本経営・健康経営支援パッケージ',
+    tag: '経営者・経営企画・財務・広報向け',
+    color: '#DB2777', bg: '#FDF2F8', text: '#9D174D', ico: '🔴',
+    images: [
+      'slides/executive/経営者向け.png',
+    ]
+  },
+  medical: {
+    id: 'medical',
+    label: '健保・産業保健向け行動変容支援パッケージ',
+    tag: '健保・産業保健向け',
+    color: '#16A34A', bg: '#F0FDF4', text: '#14532D', ico: '🟢',
+    images: [
+      'slides/medical/健康保険組合向け.png',
+    ]
+  },
+  hr: {
+    id: 'hr',
+    label: '健康経営優良法人認定・点数向上パッケージ',
+    tag: '人事・健康経営担当・総務向け',
+    color: '#EA580C', bg: '#FFF7ED', text: '#9A3412', ico: '🟠',
+    images: [
+      'slides/hr/人事向け.png',
+    ]
+  }
+};
+
+// ══════════════════════════════════════════════════
+// MASTER DATA
+// ══════════════════════════════════════════════════
+const SIZES = [
+  { v: 'large',  l: '大規模法人' },
+  { v: 'sme',    l: '中小規模法人' },
+  { v: 'kenpo',  l: '健保組合' },
+  { v: 'other',  l: 'その他' },
+];
+
+const STATUSES = [
+  { v: 'not_considering',  l: '検討していない' },
+  { v: 'considering',      l: '検討中' },
+  { v: 'pre_apply',        l: '申請前\n（申請を検討中）' },
+  { v: 'applying',         l: '申請中' },
+  { v: 'renew',            l: '取得済み\n更新予定' },
+  { v: 'renew_undecided',  l: '取得済み\n更新意向なし' },
+];
+
+const ROLES = [
+  { v: 'executive', l: '経営層・代表' },
+  { v: 'hr',        l: '人事部・総務部\n（健康経営推進担当）' },
+  { v: 'medical',   l: '産業医・保健師' },
+  { v: 'safety',    l: '安全衛生委員会' },
+];
+
+const CHALLENGES = [
+  { v: 'score',     l: '認定取得・点数向上' },
+  { v: 'employee',  l: '従業員施策' },
+  { v: 'awareness', l: '社内啓発' },
+  { v: 'health',    l: '保健事業' },
+  { v: 'mental',    l: 'メンタルヘルス対策' },
+  { v: 'lifestyle', l: '生活習慣病予防' },
+  { v: 'checkup',   l: '健診受診率の向上' },
+  { v: 'fitness',   l: '運動習慣・フィジカルケア' },
+  { v: 'data',      l: 'データ管理・活用' },
+  { v: 'labor',     l: '労災予防' },
+  { v: 'pr',        l: '広報・採用PR' },
+  { v: 'retention', l: '人材確保・離職防止' },
+  { v: 'cost',      l: '低コスト導入' },
+];
+
+// ══════════════════════════════════════════════════
+// MAPPING
+// ══════════════════════════════════════════════════
+function resolvePkg(sizeVal, roleVal) {
+  if (sizeVal === 'kenpo') return 'medical';
+  return { executive: 'executive', hr: 'hr', medical: 'medical', safety: 'safety' }[roleVal] || 'hr';
+}
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let S = initState();
+function initState() {
+  return {
+    screen: 'start',
+    company: '',
+    size: null, sizeL: '',
+    status: null, statusL: '',
+    role: null, roleL: '',
+    chal: [], chalL: [],
+    pkgKey: null,
+    slideIdx: 0,
+    libKey: null, libIdx: 0,
+  };
+}
+
+// ══════════════════════════════════════════════════
+// LOGGING
+// ══════════════════════════════════════════════════
+const STORE_KEY = 'bp_ex_logs';
+
+function saveLog() {
+  const logs = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  logs.push({
+    '入力日時':           `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
+    '会社名':             S.company || '',
+    '企業規模':           S.sizeL,
+    '健康経営ステータス':  S.statusL || '（健保のためスキップ）',
+    '役職':              S.roleL   || '（健保のためスキップ）',
+    '主な課題':           S.chalL.join('・') || 'なし',
+    '表示パッケージ':      PKGS[S.pkgKey]?.label || '',
+  });
+  localStorage.setItem(STORE_KEY, JSON.stringify(logs));
+  syncBadge();
+}
+
+function syncBadge() {
+  const logs = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  const el = document.getElementById('logBadge');
+  if (el) el.textContent = logs.length;
+}
+
+function exportCSV() {
+  const logs = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  if (!logs.length) { alert('記録データがまだありません'); return; }
+  const keys = Object.keys(logs[0]);
+  const csv = [
+    keys.join(','),
+    ...logs.map(r => keys.map(k => `"${(r[k] || '').replace(/"/g, '""')}"`).join(','))
+  ].join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const d = new Date();
+  const ds = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  a.download = `BODYPALETTE_来場者記録_${ds}.csv`;
+  a.click();
+  closeAdmin();
+}
+
+function viewLogs() {
+  const logs = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+  if (!logs.length) { alert('まだ記録がありません'); return; }
+  const text = logs.map((r, i) => {
+    return `[${i+1}] ${r['入力日時']}\n  ${r['企業規模']} / ${r['健康経営ステータス']} / ${r['役職']}\n  課題：${r['主な課題']}\n  → ${r['表示パッケージ']}`;
+  }).join('\n\n');
+  alert(`📋 来場者記録（計${logs.length}件）\n\n${text}`);
+  closeAdmin();
+}
+
+function clearLogs() {
+  if (!confirm('全ての記録データを削除しますか？\nこの操作は取り消せません。')) return;
+  localStorage.removeItem(STORE_KEY);
+  syncBadge();
+  alert('記録をクリアしました');
+  closeAdmin();
+}
+
+// ══════════════════════════════════════════════════
+// ADMIN PANEL
+// ══════════════════════════════════════════════════
+let adminOpen = false;
+function toggleAdmin() {
+  adminOpen = !adminOpen;
+  document.getElementById('admin-menu').style.display = adminOpen ? 'block' : 'none';
+}
+function closeAdmin() {
+  adminOpen = false;
+  const m = document.getElementById('admin-menu');
+  if (m) m.style.display = 'none';
+}
+document.addEventListener('click', e => {
+  const w = document.getElementById('admin-wrap');
+  if (w && !w.contains(e.target)) closeAdmin();
+});
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+function startDiagnosis() {
+  S.company = (document.getElementById('companyInput')?.value || '').trim();
+  go('step1');
+}
+
+function go(screen) {
+  S.screen = screen;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function pickSize(v, l) {
+  S.size = v; S.sizeL = l;
+  if (v === 'kenpo') {
+    S.status = null; S.statusL = '';
+    S.role = null;   S.roleL = '';
+    go('step4');
+  } else {
+    go('step2');
+  }
+}
+
+function pickStatus(v, l) {
+  S.status = v; S.statusL = l.replace('\n', '');
+  go('step4');
+}
+
+function pickRole(v, l) {
+  S.role = v; S.roleL = l.replace('\n', '');
+  go('step3');
+}
+
+function toggleChal(v, l) {
+  const i = S.chal.indexOf(v);
+  if (i === -1) { S.chal.push(v); S.chalL.push(l); }
+  else          { S.chal.splice(i,1); S.chalL.splice(i,1); }
+  render();
+}
+
+function showResult() {
+  S.pkgKey   = resolvePkg(S.size, S.role);
+  S.slideIdx = 0;
+  try { saveLog(); } catch(e) { console.warn('saveLog failed:', e); }
+  go('result');
+}
+
+function prevSlide()    { if (S.slideIdx > 0) { S.slideIdx--; render(); } }
+function nextSlide()    { const n = PKGS[S.pkgKey].images.length; if (S.slideIdx < n-1) { S.slideIdx++; render(); } }
+function prevLibSlide() { if (S.libIdx > 0) { S.libIdx--; render(); } }
+function nextLibSlide() { const n = PKGS[S.libKey].images.length; if (S.libIdx < n-1) { S.libIdx++; render(); } }
+
+function openLib(key)   { S.libKey = key; S.libIdx = 0; go('slideshow'); }
+
+function reset() { S = initState(); go('start'); }
+
+// ══════════════════════════════════════════════════
+// RENDER HELPERS
+// ══════════════════════════════════════════════════
+function progress(step) {
+  const total   = S.size === 'kenpo' ? 2 : 4;
+  const effStep = S.size === 'kenpo' && step === 4 ? 2 : step;
+  const labels  = ['企業規模', '役職', 'ステータス', '課題'];
+  const dots = [1,2,3,4]
+    .filter(n => S.size === 'kenpo' ? (n === 1 || n === 4) : true)
+    .map((n, idx) => {
+      const cls = idx + 1 < effStep ? 'done' : idx + 1 === effStep ? 'active' : 'idle';
+      return `<div class="pdot ${cls}"></div>`;
+    }).join('');
+  return `<div class="progress">${dots}<span class="plabel">STEP ${effStep} / ${total} &nbsp; ${labels[step-1]}</span></div>`;
+}
+
+function summaryBar() {
+  const items = [
+    S.company ? { l: '会社名',       v: S.company } : null,
+    S.sizeL   ? { l: '企業規模',     v: S.sizeL   } : null,
+    S.statusL ? { l: 'ステータス',   v: S.statusL } : null,
+    S.roleL   ? { l: '役職',         v: S.roleL   } : null,
+    S.chalL.length ? { l: '主な課題', v: S.chalL.join('・') } : null,
+  ].filter(Boolean);
+
+  const html = items.map((t, i) => `
+    ${i > 0 ? '<div class="sdiv"></div>' : ''}
+    <div class="stag">
+      <div class="stag-lbl">${t.l}</div>
+      <div class="stag-val">${t.v}</div>
+    </div>
+  `).join('');
+  return `<div class="sumbar">${html}</div>`;
+}
+
+function slideImg(src, pkgKey) {
+  const p = PKGS[pkgKey];
+  return `
+    <img src="${src}" alt="スライド"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+    <div class="splaceholder" style="flex-direction:column;align-items:center;justify-content:center;">
+      <div class="ico">${p.ico}</div>
+      <div class="ptitle">${p.label}</div>
+      <p style="font-size:13px;color:#aaa;line-height:1.8;">
+        スライド画像をこのフォルダに配置してください<br>
+        <code>slides/${p.id}/01.jpg</code>
+      </p>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════════════
+function renderStart() {
+  return `
+    <div class="start">
+      <div class="start-logo">BODY PALETTE<em>.</em></div>
+      <div class="start-sub">Fractal Workout</div>
+      <div class="start-h">あなたに合った提案を<br>すぐにご紹介します</div>
+      <p class="start-desc">
+        簡単な質問に答えるだけで、<br>
+        貴社の状況に最適なパッケージをご提案します。<br>
+        所要時間：約1〜2分
+      </p>
+      <div style="width:100%;max-width:360px;margin-bottom:20px;text-align:left;">
+        <label style="font-size:12px;font-weight:700;color:#6B7280;display:block;margin-bottom:6px;">会社名 <span style="font-weight:400;color:#9CA3AF;">（任意）</span></label>
+        <input id="companyInput" type="text" placeholder="例：株式会社〇〇" value="${S.company}"
+          style="width:100%;padding:12px 16px;font-size:15px;border:2px solid #E5E7EB;border-radius:12px;outline:none;font-family:inherit;"
+          onfocus="this.style.borderColor='#DB2777'" onblur="this.style.borderColor='#E5E7EB'"
+          onkeydown="if(event.key==='Enter')startDiagnosis()" />
+      </div>
+      <button class="btn-p start-btn" onclick="startDiagnosis()">診断を始める &rarr;</button>
+      <div class="start-pkgs">
+        <span class="start-pkg">🔵 労災予防</span>
+        <span class="start-pkg">🔴 人的資本経営</span>
+        <span class="start-pkg">🟢 保健事業</span>
+        <span class="start-pkg">🟠 認定支援</span>
+      </div>
+    </div>`;
+}
+
+function renderStep1() {
+  const btns = SIZES.map(s =>
+    `<button class="obtn" onclick="pickSize('${s.v}','${s.l}')">${s.l}</button>`
+  ).join('');
+  return `
+    <div class="screen">
+      <div class="hdr">
+        <div class="logo">BODY PALETTE<em>.</em></div>
+        <button class="btn-ghost" onclick="go('start')">← トップへ</button>
+      </div>
+      ${progress(1)}
+      <div class="qtitle">貴社の規模・種別を<br>教えてください</div>
+      <div class="qsub">当てはまるものを1つ選んでください</div>
+      <div class="ogrid">${btns}</div>
+    </div>`;
+}
+
+function renderStep2() {
+  const btns = ROLES.map(r => {
+    const lbl      = r.l.replace('\n', '<br>');
+    const cleanLbl = r.l.replace(/\n/g, '');
+    return `<button class="obtn ${S.role===r.v?'sel':''}" onclick="pickRole('${r.v}','${cleanLbl}')">${lbl}</button>`;
+  }).join('');
+  return `
+    <div class="screen">
+      <div class="hdr">
+        <div class="logo">BODY PALETTE<em>.</em></div>
+        <button class="btn-ghost" onclick="go('step1')">← 戻る</button>
+      </div>
+      ${progress(2)}
+      <div class="qtitle">担当者のご役職を<br>教えてください</div>
+      <div class="qsub">最も近いものを1つ選んでください</div>
+      <div class="ogrid">${btns}</div>
+    </div>`;
+}
+
+function renderStep3() {
+  const btns = STATUSES.map(s => {
+    const lbl      = s.l.replace('\n', '<br>');
+    const cleanLbl = s.l.replace(/\n/g, '');
+    return `<button class="obtn ${S.status===s.v?'sel':''}" onclick="pickStatus('${s.v}','${cleanLbl}')">${lbl}</button>`;
+  }).join('');
+  return `
+    <div class="screen">
+      <div class="hdr">
+        <div class="logo">BODY PALETTE<em>.</em></div>
+        <button class="btn-ghost" onclick="go('step2')">← 戻る</button>
+      </div>
+      ${progress(3)}
+      <div class="qtitle">健康経営のステータスを<br>教えてください</div>
+      <div class="qsub">現在の状況に最も近いものを1つ選んでください</div>
+      <div class="ogrid" style="padding-bottom:80px;">${btns}</div>
+    </div>`;
+}
+
+function renderStep4() {
+  const chips = CHALLENGES.map(c =>
+    `<button class="chip ${S.chal.includes(c.v)?'sel':''}" onclick="toggleChal('${c.v}','${c.l}')">${c.l}</button>`
+  ).join('');
+  const back = S.size === 'kenpo' ? 'step1' : 'step3';
+  return `
+    <div class="screen">
+      <div class="hdr">
+        <div class="logo">BODY PALETTE<em>.</em></div>
+        <button class="btn-ghost" onclick="go('${back}')">← 戻る</button>
+      </div>
+      ${progress(4)}
+      <div class="qtitle">現在の主な課題を<br>教えてください</div>
+      <div class="qsub">複数選択可・選ばずにスキップも可能です</div>
+      <div class="chips">${chips}</div>
+      <button class="btn-p full" onclick="showResult()">診断結果を見る &rarr;</button>
+    </div>`;
+}
+
+function renderResult() {
+  const p = PKGS[S.pkgKey];
+  const imgs = p.images;
+  const img  = imgs[S.slideIdx];
+  const total = imgs.length;
+  return `
+    <div class="screen">
+      <div class="hdr">
+        <div class="logo">BODY PALETTE<em>.</em></div>
+        <button class="btn-ghost" onclick="go('step4')">← 戻る</button>
+      </div>
+      ${summaryBar()}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <span style="background:${p.bg};color:${p.color};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;">${p.tag}</span>
+        <span style="font-size:14px;font-weight:800;color:${p.color};">${p.label}</span>
+      </div>
+      <div class="sviewer" style="background:${p.bg};">
+        ${slideImg(img, S.pkgKey)}
+      </div>
+      <div class="snav">
+        <button class="snav-btn" onclick="prevSlide()" ${S.slideIdx===0?'disabled':''}>&#9664;</button>
+        <span class="snav-cnt">${S.slideIdx+1} / ${total}</span>
+        <button class="snav-btn" onclick="nextSlide()" ${S.slideIdx===total-1?'disabled':''}>&#9654;</button>
+      </div>
+      <div class="ract">
+        <button class="btn-s" onclick="go('library')">📁 他の資料も見る</button>
+        <button class="btn-s" onclick="reset()">🔄 最初からやり直す</button>
+      </div>
+      <a class="btn-p full" href="https://calendar.app.google/C5fENLwCG5ukq3Xs8" target="_blank" rel="noopener noreferrer"
+         style="margin-bottom:32px;border-radius:999px;font-size:15px;padding:18px 24px;">
+        📅 具体的なサポート方法について健康経営の専門家と相談する
+      </a>
+    </div>`;
+}
+
+function renderLibrary() {
+  const cards = Object.values(PKGS).map(p => `
+    <div class="pkcard" onclick="openLib('${p.id}')" style="border-color:${p.color}25;">
+      <div class="pkcard-tag" style="background:${p.bg};color:${p.color};">${p.tag}</div>
+      <div class="pkcard-title" style="color:${p.color};">${p.label}</div>
+      <div class="pkcard-cnt">${p.images.length}枚</div>
+    </div>`).join('');
+  return `
+    <div class="screen">
+      <div class="hdr">
+        <div class="logo">BODY PALETTE<em>.</em></div>
+        <button class="btn-ghost" onclick="go('result')">← 結果画面へ戻る</button>
+      </div>
+      <div class="qtitle" style="margin-bottom:6px;">資料ライブラリ</div>
+      <div class="qsub">すべてのパッケージ資料を閲覧できます</div>
+      <div class="libgrid">${cards}</div>
+      <button class="btn-s full" onclick="reset()">🔄 診断をやり直す</button>
+    </div>`;
+}
+
+function renderSlideshow() {
+  const p = PKGS[S.libKey];
+  const imgs = p.images;
+  const img  = imgs[S.libIdx];
+  const total = imgs.length;
+  return `
+    <div class="screen">
+      <div class="hdr">
+        <div class="logo">BODY PALETTE<em>.</em></div>
+        <button class="btn-ghost" onclick="go('library')">← ライブラリへ戻る</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <span style="background:${p.bg};color:${p.color};font-size:11px;font-weight:800;padding:4px 12px;border-radius:999px;">${p.tag}</span>
+        <span style="font-size:14px;font-weight:800;color:${p.color};">${p.label}</span>
+      </div>
+      <div class="sviewer" style="background:${p.bg};">
+        ${slideImg(img, S.libKey)}
+      </div>
+      <div class="snav">
+        <button class="snav-btn" onclick="prevLibSlide()" ${S.libIdx===0?'disabled':''}>&#9664;</button>
+        <span class="snav-cnt">${S.libIdx+1} / ${total}</span>
+        <button class="snav-btn" onclick="nextLibSlide()" ${S.libIdx===total-1?'disabled':''}>&#9654;</button>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:32px;">
+        <button class="btn-s" onclick="go('library')">← ライブラリへ</button>
+        <button class="btn-s" onclick="reset()">🔄 診断をやり直す</button>
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// MAIN RENDER
+// ══════════════════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  const screens = {
+    start: renderStart, step1: renderStep1, step2: renderStep2,
+    step3: renderStep3, step4: renderStep4, result: renderResult,
+    library: renderLibrary, slideshow: renderSlideshow,
+  };
+  app.innerHTML = (screens[S.screen] || renderStart)();
+  syncBadge();
+}
+
+render();
+</script>
+</body>
+</html>
