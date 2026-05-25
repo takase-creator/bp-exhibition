@@ -498,10 +498,17 @@ function clearLogs() {
 // ══════════════════════════════════════════════════
 // ADMIN PANEL
 // ══════════════════════════════════════════════════
+const ADMIN_PASS = '0401';
+const SHEET_URL  = 'https://docs.google.com/spreadsheets/d/1xDf_mTCfYCyDZbK7l97PyLRdnMCvAIAmMcg_SymgxvQ/edit';
 let adminOpen = false;
 function toggleAdmin() {
-  adminOpen = !adminOpen;
-  document.getElementById('admin-menu').style.display = adminOpen ? 'block' : 'none';
+  const pw = prompt('パスワードを入力してください');
+  if (pw === null) return; // キャンセル
+  if (pw === ADMIN_PASS) {
+    window.open(SHEET_URL, '_blank');
+  } else {
+    alert('パスワードが違います');
+  }
 }
 function closeAdmin() {
   adminOpen = false;
